@@ -1,8 +1,7 @@
 package com.bondarenko.codenames.controller;
 
-import com.bondarenko.codenames.domain.model.websocket.request.Request;
-import com.bondarenko.codenames.domain.model.websocket.response.PlayerMovedResponse;
-import com.bondarenko.codenames.domain.model.websocket.response.Response;
+import com.bondarenko.codenames.domain.model.websocket.Request;
+import com.bondarenko.codenames.domain.model.websocket.Response;
 import com.bondarenko.codenames.exception.websocket.WebSocketException;
 import com.bondarenko.codenames.service.CommonService;
 import com.bondarenko.codenames.service.PreGameService;
@@ -38,7 +37,7 @@ public class WebSocketController extends TextWebSocketHandler {
         sessions.remove(session.getId());
         super.afterConnectionClosed(session, status);
         Set<String> webSocketSessionIds = commonService.findRoommateWebSocketSessionIds(session.getId());
-        PlayerMovedResponse response = commonService.leaveRoom(session.getId());
+        Response response = commonService.leaveRoom(session.getId());
         notifyRoommates(response, webSocketSessionIds);
     }
 
@@ -49,7 +48,7 @@ public class WebSocketController extends TextWebSocketHandler {
         Request request = jsonUtil.readValue(message.getPayload(), Request.class);
         request.validate();
         Request.Payload payload = request.getPayload();
-        Response<?> response;
+        Response response;
 
         switch(request.getAction()) {
             case INIT: {
@@ -64,6 +63,10 @@ public class WebSocketController extends TextWebSocketHandler {
                 response = commonService.changePlayer(payload.getPlayerId(), payload.getPlayerType());
                 break;
             }
+            case START_GAME: {
+                response = commonService.startGame(payload.getRoomId());
+                break;
+            }
             default: {
                 throw new WebSocketException("This action is not implemented yet: " + request.getAction());
             }
@@ -71,7 +74,7 @@ public class WebSocketController extends TextWebSocketHandler {
         notifyRoommates(response, commonService.findRoommateWebSocketSessionIds(payload.getPlayerId()));
     }
 
-    private void notifyRoommates(Response<?> response, Set<String> webSocketSessionIds) throws IOException {
+    private void notifyRoommates(Response response, Set<String> webSocketSessionIds) throws IOException {
         TextMessage message = new TextMessage(jsonUtil.writeValue(response));
         for (String webSocketSessionId : webSocketSessionIds) {
             WebSocketSession session = sessions.get(webSocketSessionId);

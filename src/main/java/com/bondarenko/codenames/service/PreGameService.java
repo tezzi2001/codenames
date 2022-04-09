@@ -5,7 +5,7 @@ import com.bondarenko.codenames.domain.model.common.TeamType;
 import com.bondarenko.codenames.domain.entity.Room;
 import com.bondarenko.codenames.domain.entity.Player;
 import com.bondarenko.codenames.domain.entity.Team;
-import com.bondarenko.codenames.domain.model.websocket.response.PlayerMovedResponse;
+import com.bondarenko.codenames.domain.model.websocket.Response;
 import com.bondarenko.codenames.exception.PlayerNotFoundException;
 import com.bondarenko.codenames.exception.TeamNotFoundException;
 import com.bondarenko.codenames.repository.RoomRepository;
@@ -34,14 +34,18 @@ public class PreGameService {
     }
 
     public Room createRoom(Integer playerId) {
-        Room room = this.roomRepository.save(new Room());
+        Player player = this.playerRepository.findById(playerId).orElseThrow(() -> new PlayerNotFoundException(playerId));
+        Room room = Room.builder()
+                .owner(player)
+                .build();
+        room = this.roomRepository.save(room);
 
         Team teamRed = Team.builder()
-                .teamType(TeamType.RED)
+                .teamType(TeamType.FIRST)
                 .room(room)
                 .build();
         Team teamBlue = Team.builder()
-                .teamType(TeamType.BLUE)
+                .teamType(TeamType.SECOND)
                 .room(room)
                 .build();
         Team teamSpectator = Team.builder()
@@ -52,7 +56,6 @@ public class PreGameService {
         this.teamRepository.save(teamBlue);
         this.teamRepository.save(teamSpectator);
 
-        Player player = this.playerRepository.findById(playerId).orElseThrow(() -> new PlayerNotFoundException(playerId));
         player.setTeam(teamSpectator);
         player.setRoom(room);
         this.playerRepository.save(player);
@@ -69,12 +72,12 @@ public class PreGameService {
         this.playerRepository.save(player);
     }
 
-    public PlayerMovedResponse setWebSocketSessionId(Integer playerId, String webSocketSessionId) {
+    public Response setWebSocketSessionId(Integer playerId, String webSocketSessionId) {
         Player player = playerRepository.findById(playerId).orElseThrow(() -> new PlayerNotFoundException(playerId));
         player.setPlayerType(PlayerType.DEFAULT);
         player.setWebSocketSessionId(webSocketSessionId);
         playerRepository.save(player);
 
-        return new PlayerMovedResponse(teamRepository.findAllByRoomId(player.getRoom().getId()));
+        return new Response(Response.Action.INIT, teamRepository.findAllByRoomId(player.getRoom().getId()));
     }
 }

@@ -1,4 +1,4 @@
-package com.bondarenko.codenames.domain.model.websocket.request;
+package com.bondarenko.codenames.domain.model.websocket;
 
 import com.bondarenko.codenames.domain.model.common.PlayerType;
 import com.bondarenko.codenames.domain.model.common.TeamType;
@@ -15,13 +15,15 @@ public class Request {
     public enum Action {
         INIT,
         CHANGE_TEAM,
-        CHANGE_PLAYER
+        CHANGE_PLAYER,
+        START_GAME
     }
 
     @Data
     @NoArgsConstructor
     public static class Payload {
         private Integer playerId;
+        private Integer roomId;
         private TeamType teamType;
         private PlayerType playerType;
     }
@@ -50,15 +52,20 @@ public class Request {
                 }
                 break;
             }
+            case START_GAME: {
+                if (payload.getRoomId() == null || payload.getRoomId() < 1) {
+                    throw new WebSocketException("Wrong data received");
+                }
+                break;
+            }
         }
 
         if (payload.getPlayerType() == PlayerType.NONE) {
             throw new WebSocketException("Wrong data received");
         }
 
-        switch (payload.getTeamType()) {
-            case LOST:
-            case NEUTRAL: throw new WebSocketException("Wrong data received");
+        if (payload.getTeamType() == TeamType.LOST || payload.getTeamType() == TeamType.NEUTRAL) {
+            throw new WebSocketException("Wrong data received");
         }
     }
 }

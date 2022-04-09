@@ -18,7 +18,7 @@ public class Team {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Integer id;
     @Enumerated(EnumType.STRING) private TeamType teamType;
     @OneToMany(mappedBy = "team", fetch = FetchType.EAGER) private List<Player> players; //TODO: fix FetchType.EAGER
-//    private Integer cardsLeft;
+    private Integer cardsLeft;
 //    private Boolean isWon;
 //    private Boolean itsTurn;
     @ManyToOne @JoinColumn private Room room;

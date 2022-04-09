@@ -17,7 +17,7 @@ public class Player {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Integer id;
     @Column(unique=true) private String webSocketSessionId;
     private String name;
-//    private Integer pickedCardId;
+    @ManyToOne @JoinColumn private Card pickedCard;
     @Enumerated(EnumType.STRING) private PlayerType playerType = PlayerType.NONE;
     @ManyToOne @JoinColumn private Team team;
     @ManyToOne @JoinColumn private Room room;
