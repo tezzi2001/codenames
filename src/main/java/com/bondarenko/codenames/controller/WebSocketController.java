@@ -8,6 +8,7 @@ import com.bondarenko.codenames.service.PreGameService;
 import com.bondarenko.codenames.util.JsonUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -42,6 +43,7 @@ public class WebSocketController extends TextWebSocketHandler {
     }
 
     @Override
+    @Transactional(noRollbackFor = WebSocketException.class)
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         super.handleTextMessage(session, message);
 
@@ -64,7 +66,7 @@ public class WebSocketController extends TextWebSocketHandler {
                 break;
             }
             case START_GAME: {
-                response = commonService.startGame(payload.getPlayerId(), payload.getRoomId());
+                response = commonService.startGame(payload.getRoomId(), payload.getPlayerId());
                 break;
             }
             default: {

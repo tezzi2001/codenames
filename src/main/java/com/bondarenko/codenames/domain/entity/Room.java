@@ -17,6 +17,6 @@ public class Room {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Integer id;
     @OneToMany(mappedBy = "room", fetch = FetchType.EAGER) private List<Player> players; //TODO: fix FetchType.EAGER
     @OneToOne @JoinColumn private Player owner;
-    @OneToMany(mappedBy = "room") private List<Card> cards;
-    @OneToMany(mappedBy = "room") private List<Team> teams;
+    @OneToMany(mappedBy = "room", cascade = CascadeType.REMOVE) private List<Card> cards;
+    @OneToMany(mappedBy = "room", cascade = CascadeType.REMOVE) private List<Team> teams;
 }

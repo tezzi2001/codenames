@@ -15,10 +15,10 @@ import javax.persistence.*;
 @AllArgsConstructor
 public class Player {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Integer id;
-    @Column(unique=true) private String webSocketSessionId;
+    @Column(unique = true) private String webSocketSessionId;
     private String name;
     @ManyToOne @JoinColumn private Card pickedCard;
-    @Enumerated(EnumType.STRING) private PlayerType playerType = PlayerType.NONE;
+    @Enumerated(EnumType.STRING) private PlayerType playerType;
     @ManyToOne @JoinColumn private Team team;
     @ManyToOne @JoinColumn private Room room;
 }

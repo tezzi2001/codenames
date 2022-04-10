@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface PlayerRepository extends CrudRepository<Player, Integer> {
     Optional<Player> findByWebSocketSessionId(String webSocketSessionId);
     Optional<Player> findByRoomIdAndPlayerType(Integer roomId, PlayerType playerType);
+    int countByRoomId(Integer roomId);
 }

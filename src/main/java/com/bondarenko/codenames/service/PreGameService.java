@@ -13,6 +13,7 @@ import com.bondarenko.codenames.repository.PlayerRepository;
 import com.bondarenko.codenames.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +34,7 @@ public class PreGameService {
         return this.playerRepository.findById(id).orElseThrow(() -> new PlayerNotFoundException(id));
     }
 
+    @Transactional
     public Room createRoom(Integer playerId) {
         Player player = this.playerRepository.findById(playerId).orElseThrow(() -> new PlayerNotFoundException(playerId));
         Room room = Room.builder()
@@ -63,6 +65,7 @@ public class PreGameService {
         return room;
     }
 
+    @Transactional
     public void joinRoom(Integer playerId, Integer roomId) {
         Team teamSpectator = this.teamRepository.findByTeamTypeAndRoomId(TeamType.SPECTATOR, roomId).orElseThrow(() -> new TeamNotFoundException(TeamType.SPECTATOR, roomId));
 
@@ -72,6 +75,7 @@ public class PreGameService {
         this.playerRepository.save(player);
     }
 
+    @Transactional
     public Response setWebSocketSessionId(Integer playerId, String webSocketSessionId) {
         Player player = playerRepository.findById(playerId).orElseThrow(() -> new PlayerNotFoundException(playerId));
         player.setPlayerType(PlayerType.DEFAULT);

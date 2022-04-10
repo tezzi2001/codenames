@@ -17,6 +17,7 @@ import com.bondarenko.codenames.repository.RoomRepository;
 import com.bondarenko.codenames.repository.TeamRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ public class CommonService {
     private final List<String> words;
     private final static Random RANDOMIZER = new Random();
 
+    @Transactional
     public Response changeTeam(Integer playerId, TeamType teamType) {
         Player player = playerRepository.findById(playerId).orElseThrow(() -> new PlayerNotFoundException(playerId));
         Integer roomId = player.getRoom().getId();
@@ -41,6 +43,7 @@ public class CommonService {
         return new Response(Response.Action.CHANGE_TEAM, teamRepository.findAllByRoomId(roomId));
     }
 
+    @Transactional
     public Response changePlayer(Integer playerId, PlayerType playerType) {
         Player player = playerRepository.findById(playerId).orElseThrow(() -> new PlayerNotFoundException(playerId));
         Integer roomId = player.getRoom().getId();
@@ -56,6 +59,7 @@ public class CommonService {
         return new Response(Response.Action.CHANGE_PLAYER, teamRepository.findAllByRoomId(player.getRoom().getId()));
     }
 
+    @Transactional
     public Response leaveRoom(String webSocketSessionId) {
         Player player = playerRepository.findByWebSocketSessionId(webSocketSessionId).orElseThrow(() -> new PlayerNotFoundException(webSocketSessionId));
         Integer roomId = player.getRoom().getId();
@@ -64,6 +68,10 @@ public class CommonService {
         player.setTeam(null);
         player.setWebSocketSessionId(null);
         playerRepository.save(player);
+
+        if (playerRepository.countByRoomId(roomId) == 0) {
+            roomRepository.deleteById(roomId);
+        }
 
         return new Response(Response.Action.LEAVE_ROOM, teamRepository.findAllByRoomId(roomId));
     }
@@ -84,6 +92,7 @@ public class CommonService {
                 .collect(Collectors.toSet());
     }
 
+    @Transactional
     public Response startGame(Integer roomId, Integer playerId) {
         Room room = roomRepository.findByIdAndOwnerId(roomId, playerId).orElseThrow(() -> new RoomNotFoundException(roomId, playerId));
         for (Team team : teamRepository.findAllByRoomId(roomId)) {
