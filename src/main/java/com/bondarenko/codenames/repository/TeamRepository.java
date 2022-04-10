@@ -12,6 +12,6 @@ import java.util.Optional;
 @Repository
 public interface TeamRepository extends CrudRepository<Team, Integer> {
     Optional<Team> findByTeamTypeAndRoomId(TeamType teamType, Integer roomId);
-    @Query(value = "SELECT * FROM Team INNER JOIN Player ON Team.id = Player.team_id WHERE Team.room_id = :roomId", nativeQuery = true)
+    @Query(value = "SELECT * FROM Team LEFT JOIN Player ON Team.id = Player.team_id WHERE Team.room_id = :roomId", nativeQuery = true)
     List<Team> findAllByRoomId(Integer roomId);
 }

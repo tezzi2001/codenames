@@ -64,7 +64,7 @@ public class WebSocketController extends TextWebSocketHandler {
                 break;
             }
             case START_GAME: {
-                response = commonService.startGame(payload.getRoomId());
+                response = commonService.startGame(payload.getPlayerId(), payload.getRoomId());
                 break;
             }
             default: {

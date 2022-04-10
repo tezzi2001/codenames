@@ -8,6 +8,7 @@ import com.bondarenko.codenames.domain.model.common.PlayerType;
 import com.bondarenko.codenames.domain.model.common.TeamType;
 import com.bondarenko.codenames.domain.model.websocket.Response;
 import com.bondarenko.codenames.exception.PlayerNotFoundException;
+import com.bondarenko.codenames.exception.RoomNotFoundException;
 import com.bondarenko.codenames.exception.TeamNotFoundException;
 import com.bondarenko.codenames.exception.websocket.WebSocketException;
 import com.bondarenko.codenames.repository.CardRepository;
@@ -83,8 +84,28 @@ public class CommonService {
                 .collect(Collectors.toSet());
     }
 
-    public Response startGame(Integer roomId) {
-        Room room = roomRepository.findById(roomId).get();
+    public Response startGame(Integer roomId, Integer playerId) {
+        Room room = roomRepository.findByIdAndOwnerId(roomId, playerId).orElseThrow(() -> new RoomNotFoundException(roomId, playerId));
+        for (Team team : teamRepository.findAllByRoomId(roomId)) {
+            switch (team.getTeamType()) {
+                case FIRST: {
+                    team.setCardsLeft(9);
+                    team.setHasTurn(true);
+                    team.setIsWon(false);
+                    team.setIsLost(false);
+                    teamRepository.save(team);
+                    break;
+                }
+                case SECOND: {
+                    team.setCardsLeft(8);
+                    team.setHasTurn(false);
+                    team.setIsWon(false);
+                    team.setIsLost(false);
+                    teamRepository.save(team);
+                    break;
+                }
+            }
+        }
         CardBuilder cardBuilder = new CardBuilder();
         List<Card> cards = generateWords(25).stream()
                 .map(word -> cardRepository.save(cardBuilder.build(room, word)))
@@ -101,7 +122,7 @@ public class CommonService {
         return selectedWords;
     }
 
-    private class CardBuilder {
+    private static class CardBuilder {
         private final Map<TeamType, Integer> typesMaps = new HashMap<>();
 
         private CardBuilder() {

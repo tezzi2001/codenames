@@ -19,7 +19,8 @@ public class Team {
     @Enumerated(EnumType.STRING) private TeamType teamType;
     @OneToMany(mappedBy = "team", fetch = FetchType.EAGER) private List<Player> players; //TODO: fix FetchType.EAGER
     private Integer cardsLeft;
-//    private Boolean isWon;
-//    private Boolean itsTurn;
+    private Boolean isWon;
+    private Boolean isLost;
+    private Boolean hasTurn;
     @ManyToOne @JoinColumn private Room room;
 }
