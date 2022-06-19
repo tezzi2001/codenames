@@ -16,7 +16,8 @@ public class Request {
         INIT,
         CHANGE_TEAM,
         CHANGE_PLAYER,
-        START_GAME
+        START_GAME,
+        MAX_PIDOR
     }
 
     @Data
@@ -40,14 +41,12 @@ public class Request {
                 }
                 break;
             }
-            case CHANGE_TEAM: {
-                if (payload.getPlayerId() == null || payload.getPlayerId() < 1 || payload.getTeamType() == null || payload.getTeamType().equals(TeamType.NEUTRAL) || payload.getTeamType().equals(TeamType.LOST)) {
-                    throw new WebSocketException("Wrong data received");
-                }
-                break;
-            }
             case CHANGE_PLAYER: {
-                if (payload.getPlayerId() == null || payload.getPlayerId() < 1 || payload.getPlayerType() == null) {
+                if (
+                    payload.getPlayerId() == null || payload.getPlayerId() < 1 ||
+                    payload.getPlayerType() == null ||
+                    payload.getTeamType() == null || payload.getTeamType().equals(TeamType.NEUTRAL) || payload.getTeamType().equals(TeamType.LOST)
+                ) {
                     throw new WebSocketException("Wrong data received");
                 }
                 break;

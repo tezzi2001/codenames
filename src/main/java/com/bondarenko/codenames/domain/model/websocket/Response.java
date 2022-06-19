@@ -69,6 +69,7 @@ public class Response {
             switch (player.getPlayerType()) {
                 case MASTER: {
                     master = new Response.PlayerPayload(player.getId(), player.getName());
+                    break;
                 }
                 case NONE:
                 case DEFAULT: {

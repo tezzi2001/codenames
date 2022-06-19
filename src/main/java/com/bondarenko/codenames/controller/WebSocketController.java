@@ -2,6 +2,7 @@ package com.bondarenko.codenames.controller;
 
 import com.bondarenko.codenames.domain.model.websocket.Request;
 import com.bondarenko.codenames.domain.model.websocket.Response;
+import com.bondarenko.codenames.domain.model.websocket.Error;
 import com.bondarenko.codenames.exception.websocket.WebSocketException;
 import com.bondarenko.codenames.service.CommonService;
 import com.bondarenko.codenames.service.PreGameService;
@@ -49,31 +50,35 @@ public class WebSocketController extends TextWebSocketHandler {
 
         Request request = jsonUtil.readValue(message.getPayload(), Request.class);
         request.validate();
-        Request.Payload payload = request.getPayload();
-        Response response;
+        try {
+            Response response = doAction(session, request);
+            notifyRoommates(response, commonService.findRoommateWebSocketSessionIds(request.getPayload().getPlayerId()));
+        } catch (WebSocketException e) {
+            notifySelf(new Error(e.getReason()), session);
+        }
+    }
 
+    private Response doAction(WebSocketSession session, Request request) {
+        Request.Payload payload = request.getPayload();
         switch(request.getAction()) {
             case INIT: {
-                response = preGameService.setWebSocketSessionId(payload.getPlayerId(), session.getId());
-                break;
-            }
-            case CHANGE_TEAM: {
-                response = commonService.changeTeam(payload.getPlayerId(), payload.getTeamType());
-                break;
+                return preGameService.setWebSocketSessionId(payload.getPlayerId(), session.getId());
             }
             case CHANGE_PLAYER: {
-                response = commonService.changePlayer(payload.getPlayerId(), payload.getPlayerType());
-                break;
+                return commonService.changePlayer(payload.getPlayerId(), payload.getPlayerType(), payload.getTeamType());
             }
             case START_GAME: {
-                response = commonService.startGame(payload.getRoomId(), payload.getPlayerId());
-                break;
+                return commonService.startGame(payload.getRoomId(), payload.getPlayerId());
             }
             default: {
                 throw new WebSocketException("This action is not implemented yet: " + request.getAction());
             }
         }
-        notifyRoommates(response, commonService.findRoommateWebSocketSessionIds(payload.getPlayerId()));
+    }
+
+    private void notifySelf(Error error, WebSocketSession session) throws IOException {
+        TextMessage message = new TextMessage(jsonUtil.writeValue(error));
+        session.sendMessage(message);
     }
 
     private void notifyRoommates(Response response, Set<String> webSocketSessionIds) throws IOException {

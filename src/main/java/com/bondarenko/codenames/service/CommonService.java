@@ -32,25 +32,18 @@ public class CommonService {
     private final List<String> words;
     private final static Random RANDOMIZER = new Random();
 
-    @Transactional
-    public Response changeTeam(Integer playerId, TeamType teamType) {
+    public Response changePlayer(Integer playerId, PlayerType playerType, TeamType teamType) {
         Player player = playerRepository.findById(playerId).orElseThrow(() -> new PlayerNotFoundException(playerId));
-        Integer roomId = player.getRoom().getId();
-        Team newTeam = teamRepository.findByTeamTypeAndRoomId(teamType, roomId).orElseThrow(() -> new TeamNotFoundException(teamType, roomId));
+        Room room = player.getRoom();
+        Team newTeam = teamRepository.findByTeamTypeAndRoomId(teamType, room.getId()).orElseThrow(() -> new TeamNotFoundException(teamType, room.getId()));
         player.setTeam(newTeam);
-        playerRepository.save(player);
-
-        return new Response(Response.Action.CHANGE_TEAM, teamRepository.findAllByRoomId(roomId));
-    }
-
-    @Transactional
-    public Response changePlayer(Integer playerId, PlayerType playerType) {
-        Player player = playerRepository.findById(playerId).orElseThrow(() -> new PlayerNotFoundException(playerId));
-        Integer roomId = player.getRoom().getId();
         if (PlayerType.MASTER.equals(playerType)) {
-            Optional<Player> master = playerRepository.findByRoomIdAndPlayerType(roomId, playerType);
+            Optional<Player> master = playerRepository.findByRoomIdAndPlayerType(room.getId(), playerType);
             if (master.isPresent()) {
-                throw new WebSocketException("In room with ID " + roomId + " master has already set");
+                throw new WebSocketException("In room with ID " + room.getId() + " master has already set");
+            }
+            if (newTeam.isSpectator()) {
+                throw new WebSocketException("Cannot set spectator as master");
             }
         }
         player.setPlayerType(playerType);
@@ -69,9 +62,9 @@ public class CommonService {
         player.setWebSocketSessionId(null);
         playerRepository.save(player);
 
-        if (playerRepository.countByRoomId(roomId) == 0) {
-            roomRepository.deleteById(roomId);
-        }
+//        if (playerRepository.countByRoomId(roomId) == 0) {
+//            roomRepository.deleteById(roomId);
+//        }
 
         return new Response(Response.Action.LEAVE_ROOM, teamRepository.findAllByRoomId(roomId));
     }

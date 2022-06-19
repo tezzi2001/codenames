@@ -23,4 +23,8 @@ public class Team {
     private Boolean isLost;
     private Boolean hasTurn;
     @ManyToOne @JoinColumn private Room room;
+
+    public boolean isSpectator() {
+        return this.teamType == TeamType.SPECTATOR;
+    }
 }
