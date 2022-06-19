@@ -7,6 +7,7 @@ import com.bondarenko.codenames.domain.entity.Player;
 import com.bondarenko.codenames.domain.entity.Team;
 import com.bondarenko.codenames.domain.model.websocket.Response;
 import com.bondarenko.codenames.exception.PlayerNotFoundException;
+import com.bondarenko.codenames.exception.RoomNotFoundException;
 import com.bondarenko.codenames.exception.TeamNotFoundException;
 import com.bondarenko.codenames.repository.RoomRepository;
 import com.bondarenko.codenames.repository.PlayerRepository;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class PreGameService {
+    private final CountdownService countdownService;
     private final RoomRepository roomRepository;
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
@@ -80,8 +82,11 @@ public class PreGameService {
         Player player = playerRepository.findById(playerId).orElseThrow(() -> new PlayerNotFoundException(playerId));
         player.setPlayerType(PlayerType.DEFAULT);
         player.setWebSocketSessionId(webSocketSessionId);
-        playerRepository.save(player);
+        this.playerRepository.save(player);
+        Room room = this.roomRepository.findById(player.getRoom().getId()).orElseThrow(() -> new RoomNotFoundException(player.getRoom().getId()));
 
-        return new Response(Response.Action.INIT, teamRepository.findAllByRoomId(player.getRoom().getId()));
+        Response response = new Response(Response.Action.INIT, room, teamRepository.findAllByRoomId(player.getRoom().getId()));
+        response.setSecondsLeft(this.countdownService.getDelay(room.getId()));
+        return response;
     }
 }

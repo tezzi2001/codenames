@@ -2,16 +2,14 @@ package com.bondarenko.codenames.domain.model.websocket;
 
 import com.bondarenko.codenames.domain.entity.Card;
 import com.bondarenko.codenames.domain.entity.Player;
+import com.bondarenko.codenames.domain.entity.Room;
 import com.bondarenko.codenames.domain.entity.Team;
 import com.bondarenko.codenames.domain.model.common.TeamType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
@@ -20,14 +18,20 @@ public class Response {
     private final Action action;
     private final Payload payload;
 
-    public Response(Action action, List<Team> teams, List<Card> cards) {
+    public Response(Action action, Room room, List<Team> teams, List<Card> cards) {
         this.action = action;
         this.payload = new Payload(teams, cards);
+        this.payload.ownerId = room.getOwner().getId();
     }
 
-    public Response(Action action, List<Team> teams) {
+    public Response(Action action, Room room, List<Team> teams) {
         this.action = action;
         this.payload = new Payload(teams);
+        this.payload.ownerId = room.getOwner().getId();
+    }
+
+    public void setSecondsLeft(Long secondsLeft) {
+        this.payload.secondsLeft = secondsLeft;
     }
 
     public enum Action {
@@ -60,6 +64,8 @@ public class Response {
 
         private final List<Response.TeamPayload> teams;
         private final List<Response.CardPayload> cards;
+        private Long secondsLeft;
+        private Integer ownerId;
     }
 
     private static Response.TeamPayload buildTeamPayload(Team team) {

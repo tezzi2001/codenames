@@ -14,10 +14,8 @@ public class Request {
 
     public enum Action {
         INIT,
-        CHANGE_TEAM,
         CHANGE_PLAYER,
-        START_GAME,
-        MAX_PIDOR
+        START_GAME
     }
 
     @Data

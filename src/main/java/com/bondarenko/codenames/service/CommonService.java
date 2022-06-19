@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CommonService {
+    private final CountdownService countdownService;
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
     private final CardRepository cardRepository;
@@ -34,7 +35,7 @@ public class CommonService {
 
     public Response changePlayer(Integer playerId, PlayerType playerType, TeamType teamType) {
         Player player = playerRepository.findById(playerId).orElseThrow(() -> new PlayerNotFoundException(playerId));
-        Room room = player.getRoom();
+        Room room = this.roomRepository.findById(player.getRoom().getId()).orElseThrow(() -> new RoomNotFoundException(player.getRoom().getId()));
         Team newTeam = teamRepository.findByTeamTypeAndRoomId(teamType, room.getId()).orElseThrow(() -> new TeamNotFoundException(teamType, room.getId()));
         player.setTeam(newTeam);
         if (PlayerType.MASTER.equals(playerType)) {
@@ -49,13 +50,15 @@ public class CommonService {
         player.setPlayerType(playerType);
         playerRepository.save(player);
 
-        return new Response(Response.Action.CHANGE_PLAYER, teamRepository.findAllByRoomId(player.getRoom().getId()));
+        Response response = new Response(Response.Action.CHANGE_PLAYER, room, teamRepository.findAllByRoomId(player.getRoom().getId()));
+        response.setSecondsLeft(this.countdownService.getDelay(room.getId()));
+        return response;
     }
 
     @Transactional
     public Response leaveRoom(String webSocketSessionId) {
         Player player = playerRepository.findByWebSocketSessionId(webSocketSessionId).orElseThrow(() -> new PlayerNotFoundException(webSocketSessionId));
-        Integer roomId = player.getRoom().getId();
+        Room room = this.roomRepository.findById(player.getRoom().getId()).orElseThrow(() -> new RoomNotFoundException(player.getRoom().getId()));
         player.setPlayerType(PlayerType.NONE);
         player.setRoom(null);
         player.setTeam(null);
@@ -66,7 +69,9 @@ public class CommonService {
 //            roomRepository.deleteById(roomId);
 //        }
 
-        return new Response(Response.Action.LEAVE_ROOM, teamRepository.findAllByRoomId(roomId));
+        Response response = new Response(Response.Action.LEAVE_ROOM, room, teamRepository.findAllByRoomId(room.getId()));
+        response.setSecondsLeft(this.countdownService.getDelay(room.getId()));
+        return response;
     }
 
     public Set<String> findRoommateWebSocketSessionIds(String webSocketSessionId) {
@@ -113,7 +118,10 @@ public class CommonService {
                 .map(word -> cardRepository.save(cardBuilder.build(room, word)))
                 .collect(Collectors.toList());
 
-        return new Response(Response.Action.START_GAME, teamRepository.findAllByRoomId(roomId), cards);
+        long secondsLeft = this.countdownService.setTimer(roomId, CountdownService.FIRST_DELAY);
+        Response response = new Response(Response.Action.START_GAME, room, teamRepository.findAllByRoomId(roomId), cards);
+        response.setSecondsLeft(secondsLeft);
+        return response;
     }
 
     private Set<String> generateWords(int wordsQuantity) {
